@@ -1,0 +1,3 @@
+Online classifier, later versions can be batch but currently im unsure of the maths and implementation. 
+The classifier is not modular. Users cannot select different activation functions or things like that. 
+User can only supply different inputs files. Nothing about inner process is in control of the user. 
