@@ -6,9 +6,11 @@ public class Classifier {
 	/**
 	 * to do (in no particular order)
 	 * 	in this class, many times have to cast Node[] as (ActivatedNode[])Node. It would prob be prefereable to do this the other way around
-	 *  where List<ActivatedNode[] network; and cast ActivatedNode[] as (Node[])ActivatedNode.  
+	 *  where List<ActivatedNode[] architecture; and cast ActivatedNode[] as (Node[])ActivatedNode.  
 	 * 	
-	 * 
+	 * Issue with weight_delta:
+	 * 	some examples have weight -= weight * delta
+	 * other examples have : weight += weight * delta
 	 * 
 	 * create some kind of error handling stack / procedure / standard when throwing errors
 	 */
@@ -22,26 +24,21 @@ public class Classifier {
 	 * 	c. list of the initial and output nodes
 	 * 
 	 */
+	private Network architecture;
 	
-	private List<Node[]> network;
-	private double n_learn;
-	private double dmax;
-	private double momentum;
-	private double flat_elim;
-	//epochs? training freq?
 	
 
 	public Classifier(int[] architecture) {		
-		this.network = new ArrayList<Node[]>();
+		List<Node[]> node_layers = new ArrayList<Node[]>();
 		int size = architecture.length;				
 		for(int i = 0; i< size - 1 ; i++) {			
 			int numNodes = architecture[i];
 			Node[] layer = createLayer(numNodes, i);
-			this.network.add(layer);
+			node_layers.add(layer);
 		}
 		//add the final layer, outisde of loop for -1 layerPos arg
-		this.network.add(createLayer(architecture[size-1], -1));
-		
+		node_layers.add(createLayer(architecture[size-1], -1));
+		this.architecture = new Network(node_layers, 0,0,0,0);
 		connectLayers();
 	}
 	
@@ -64,12 +61,12 @@ public class Classifier {
 	}
 		
 	private void connectLayers() {
-		
-		int len = this.network.size();
+		List<Node[]> layers = this.architecture.getNodeNetwork();
+		int len = layers.size();
 		//only do hidden and input layer, output doesnt need to be run as no children to connect with
 		for(int i=0; i < len - 2; i++) {
-			Node[] parents = this.network.get(i);
-			ActivatedNode[] children = (this.network.get(i))[0].getChildren();
+			Node[] parents = layers.get(i);
+			ActivatedNode[] children = layers.get(i)[0].getChildren();
 			int p_len = parents.length;
 			int c_len = parents.length;
 			
@@ -84,35 +81,73 @@ public class Classifier {
 	}
 
 	
-	public void train(List<double[]> trainingset, double[] targets) {				
+	public void train(double[] instance, double[] targets) {		
+		classify(instance); 	
+		backPropogate(targets);		
 		
-		for(double[] instance: trainingset) {
-			classify((instance)); 	
-			backPropogate(targets);
-			
-			int num_layer = network.size(); //update weights and biases
-			
-			for(int i=1; i<num_layer; i++) {//start from i=1 to skip the input layer
-				// need to incorporate momentum and flat_elim, need to use inputs, so use the array method
-				
-				ActivatedNode[] layer = (ActivatedNode[]) this.network.get(i); 
-				int layer_len = layer.length;
-				for(int j = 0; j < layer_len; j++) {
-					ActivatedNode neuron = layer[j];
-					Map<Node, Double> weights = neuron.getWeights();
-					Set<Node> parents = neuron.getParentNodes();
-					for(Node parent: parents) {
-						double old_weight = weights.get(parent);
-						double	weight_delta = n_learn * neuron.getErrorSignal() * parent.getOutput();
-						weights.replace(parent, old_weight + weight_delta);
-					}
-					double new_bias = neuron.getBias() + (n_learn * neuron.getErrorSignal());
-					neuron.setBias( new_bias );
+		List<Node[]> layers = architecture.getNodeNetwork();
+		double n_learn = architecture.getLearnRate();
+		int num_layer = layers.size(); //update weights and biases
+		for(int i=1; i<num_layer; i++) {//start from i=1 to skip the input layer
+		// need to incorporate momentum and flat_elim, need to use inputs, so use the array method
+			ActivatedNode[] layer = (ActivatedNode[]) layers.get(i); 
+			int layer_len = layer.length;
+			for(int j = 0; j < layer_len; j++) {
+				ActivatedNode neuron = layer[j];
+				Map<Node, Double> weights = neuron.getWeights();
+				Set<Node> parents = neuron.getParentNodes();
+				for(Node parent: parents) {
+					double old_weight = weights.get(parent);
+					double	weight_delta = n_learn * neuron.getErrorSignal() * parent.getOutput();
+					weights.replace(parent, old_weight + weight_delta);
 				}
-				
-			}				
-		}
+				double new_bias = neuron.getBias() + (n_learn * neuron.getErrorSignal());
+				neuron.setBias( new_bias );
+			}
+		}				
 	}
+	
+	
+	/**
+	 * Error is squared so that smaller errors have a smaller effect on the weight updates, while
+	 * larger errors are emphasized even moreso in their effect on the new weight values. 
+	 * calculating error using the simpler method found in  https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
+	 *Stochastic gradient descent. 
+	 * @param result
+	 * @param target
+	 */
+	public void backPropogate(double[] target) {
+		// Does this method correctly handle input nodes and their lack of effect on weights??
+		List<Node[]> layers = architecture.getNodeNetwork();
+		int output_indx = layers.size() - 1;
+		for(int i = output_indx; i >= 0; i--) { //move through architecture in reverse order, starting at output layer.
+			Node[] layer = layers.get(i);
+			List<Double> errors = new ArrayList<Double>();
+			int num_nodes = layer.length;			
+			if(i == output_indx) { //output layer
+				for(int j =0; j<num_nodes; j++) {					
+					double neuron_error = target[i] - layer[j].getOutput();
+					errors.add(neuron_error);
+				}
+			}else { //hidden layer
+				for(int j =0; j<num_nodes; j++) {
+					Node neuron = layer[j];
+					double neuron_error = 0.0;
+					for(ActivatedNode child: neuron.getChildren()) {
+						double weight = child.getWeights().get(neuron);
+						neuron_error += (weight * child.getErrorSignal());
+					}
+					errors.add(neuron_error);
+				}
+			}
+			//update neuron error signals
+			for(int j = 0; j < num_nodes; j++) {
+				Node neuron = layer[j];
+				neuron.setErrorSignal(errors.get(j) * transferDerivativeSigmoid(neuron.getOutput()));
+			}	
+		}				
+	}
+
 		
 		
 		
@@ -131,8 +166,10 @@ public class Classifier {
 		applyInput(input);
 		return forwardPropogate();		
 	}
+	
+		
 	/**
-	 * sets values of the input nodes in networks first layer.
+	 * sets values of the input nodes in architectures first layer.
 	 * values are doubles stored in an array
 	 * 
 	 *  TO DO:
@@ -140,7 +177,7 @@ public class Classifier {
 	 * @param input
 	 */
 	public void applyInput(double[] input) {
-		Node[] layer = network.get(0);
+		Node[] layer = architecture.getNodeNetwork().get(0);
 		int len = layer.length;
 		if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception
 		else {
@@ -155,20 +192,19 @@ public class Classifier {
 	 * the activation function??
 	 */
 	public double[] forwardPropogate() {
-		int layer_count = network.size();		
-		
+		List<Node[]> layers = architecture.getNodeNetwork();
+		int layer_count = layers.size();		
 		for(int i = 1; i < layer_count; i++) {
-			ActivatedNode[] layer = (ActivatedNode[])network.get(i);
+			ActivatedNode[] layer = (ActivatedNode[])layers.get(i);
 			int node_count = layer.length;
 			for(int j=0; j<node_count; j++) {
 				double output = layer[j].evaluate(); //node takes care of evaluation itself
-				output = layer[j].activationSigmoid(output);
+				output = activationSigmoid(output);
 				layer[j].setOutput(output);
 			}
 		}
-		
 		//return output layer values as results
-		ActivatedNode[] output_layer = (ActivatedNode[])network.get(layer_count-1);
+		ActivatedNode[] output_layer = (ActivatedNode[])layers.get(layer_count-1);
 		int len = output_layer.length;
 		double[] results = new double[len];		
 		for(int i = 0; i < len; i++) {
@@ -177,48 +213,7 @@ public class Classifier {
 		return results;
 	}
 	
-	/**
-	 * Error is squared so that smaller errors have a smaller effect on the weight updates, while
-	 * larger errors are emphasized even moreso in their effect on the new weight values. 
-	 * calculating error using the simpler method found in  https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
-	 *Stochastic gradient descent. 
-	 * @param result
-	 * @param target
-	 */
-	public void backPropogate(double[] target) {
-		// Does this method correctly handle input nodes and their lack of effect on weights??
-		int output_indx = network.size() - 1;
-		for(int i = output_indx; i >= 0; i--) { //move through network in reverse order, starting at output layer.
-			Node[] layer = network.get(i);
-			List<Double> errors = new ArrayList<Double>();
-			int num_nodes = layer.length;
-			
-			if(i == output_indx) {
-				for(int j =0; j<num_nodes; j++) {
-					Node neuron = layer[j];
-					double neuron_error = Math.pow(target[i] - neuron.getOutput(), 2) / 2;
-					errors.add(neuron_error);
-				}
-			}else { //hidden layer
-				for(int j =0; j<num_nodes; j++) {
-					Node neuron = layer[j];
-					double neuron_error = 0.0;
-					for(ActivatedNode child: neuron.getChildren()) {
-						double weight = child.getWeights().get(neuron);
-						neuron_error += weight * child.getErrorSignal();
-					}
-					errors.add(neuron_error);
-				}
-			}
-			//update neuron error signals
-			for(int j = 0; j < num_nodes; j++) {
-				Node neuron = layer[j];
-				neuron.setErrorSignal(errors.get(j) * transferDerivative(neuron.getOutput()));
-			}
-			
-					
-		}				
-	}
+	
 	
 	/**
 	 * Used to calculate the slope of an output neuron for neurons that used the sigmoid 
@@ -227,25 +222,30 @@ public class Classifier {
 	 * @param output
 	 * @return
 	 */
-	private double transferDerivative(double output) {
+	private double transferDerivativeSigmoid(double output) {
 		return output*(1 - output);
 	}
 	
-	private double outputNodeError(double output, double target) {
-		double error = Math.pow(target - output, 2)/2;
-		return error * transferDerivative(output);
+	
+	private double meanSquaredError(double target, double output) {
+		return Math.pow(target - output, 2) / 2;
 	}
 	
 	/**
-	 * jth neuron is current neuron, kth neuron is neuron in prev / parent layer.
-	 * @param weight_k weight that connects kth neuron to jth neuron
-	 * @param error_j error signal from jth neuron 
-	 * @param output output from current neuron
+	 * Activation function
+	 * @param output
 	 * @return
-	 */	
-	private double hiddenNodeError(double weight_k, double error_j, double output) {
-		double error = (weight_k * error_j) * transferDerivative(output);
-		return error;
+	 */
+	private double activationSigmoid(double output) {
+		double euler = Math.exp(-output);
+		return 1 / (1 + euler );
 	}
+	
+	
+	public Network getArchitecture(){
+		return this.architecture;
+	}
+	
+	
 	
 }

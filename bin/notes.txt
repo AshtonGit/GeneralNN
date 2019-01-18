@@ -1,3 +1,35 @@
 Online classifier, later versions can be batch but currently im unsure of the maths and implementation. 
 The classifier is not modular. Users cannot select different activation functions or things like that. 
 User can only supply different inputs files. Nothing about inner process is in control of the user. 
+
+
+For multiclass classificaiton,
+	Softmax and cross entropy are most commonly used activation and loss functions 
+	for creating a mutli classification nn\
+	
+	
+	Softmax is used as the final layer (taking array of output layer outputs as its inputs)
+	Mean squared error can be used as the loss function with both softmax and sigmoid activation functions 
+	but cross entropy is more convenient when softmax is used. 
+	
+	cross entropy = H(output, target) = - Sum ( output(i) * log target(i))
+	Cross entropy is the sum of the products of all actual probablilties with negative log of the predicted 
+	probabilities. 
+	
+	For multi-class classification, cross entropy function is known to outperform gradient decent function.
+	
+	Note:
+		if using the softmax in final output layer, the output values of those nodes does not need to go 
+		through a signmoid first)
+		eg  (in *w +b) -> (sigmoid) = h.
+			(h * w +b) -> (sigmoid) = O.
+			(O) -> softmax = result
+			
+			
+			
+			need to implement mean suqare error method in Classifier
+			need to make classify and backprop dynamic so that they can do both binary and multiclass
+			classificaiton. This means prob splitting it into two methods. or splitting the Classifier
+			class into two classes. 
+			
+Need to make a large plan with daily weekly and monthly goals. This for all projects. 

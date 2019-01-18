@@ -22,13 +22,9 @@ public class Classifier_Unit_Tests {
 		Classifier testClassifier;
 				
 		switch (select) {
-		case 0:testClassifier = new Classifier();
+		case 0:testClassifier = new Classifier(); //1 input, 1 output, 2 hidden nodes. super simple
 			break;
-		case 1: testClassifier = new Classifier();
-			break;
-		case 2: testClassifier = new Classifier();			
-			break;
-		default: testClassifier = new Classifier();
+		case 1: testClassifier = new Classifier();// 2 inputs, 3 hidden nodes, 2 outputs, more complex
 			break;
 		}
 			
@@ -37,7 +33,7 @@ public class Classifier_Unit_Tests {
 	}
 	
 	public void testBackprop() {
-		
+		Classifier tc = new Classifier();
 	}
 	
 	public void testWeightUpdate() {

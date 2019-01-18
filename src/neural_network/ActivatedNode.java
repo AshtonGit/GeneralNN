@@ -102,16 +102,6 @@ public class ActivatedNode extends Node{
 		return sum;
 	}
 	
-	/**
-	 * Activation function
-	 * @param output
-	 * @return
-	 */
-	public double activationSigmoid(double output) {
-		double euler = Math.exp(-output);
-		return 1 / (1 + euler );
-	}
-	
 	public void setOutput(double output) {
 		this.output = output;
 	}
