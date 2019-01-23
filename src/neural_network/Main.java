@@ -1,5 +1,7 @@
 package neural_network;
 
+import java.io.FileNotFoundException;
+
 public class Main {
 	
 	public Main() {
@@ -11,7 +13,7 @@ public class Main {
 	provide the images and this classifier will do the rest.
 	interact through a swing UI
 	classifiers stored in txt or .dat files
-	classifiers architecture and weights are represented by a custom grammer
+	classifiers architecture and weights are represented by a custom grammar
 	program parses files written in the grammar to create the classifiers or trains its own.
 	provided images are read as inputs into the classifier input nodes. 
 
@@ -25,8 +27,11 @@ public class Main {
 	3. 
 
  * @param args
+ * @throws FileNotFoundException 
  */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
+		DataParser dt = new DataParser("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\debug_parser.txt", 3);
+		
 		int[] architecture = new int[]{2,3,1};
 		double[] input = new double[] {0.5, 0.99};
 		Classifier NN = new Classifier(architecture);
