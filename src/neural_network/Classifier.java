@@ -16,47 +16,40 @@ public class Classifier {
 	 */
 	
 	
-	/**
-	 * consider how to store the data structure
-	 * alternatives: 
-	 * 	a. list of arrays of nodes, layer number is implied by position in the list
-	 * 	b. map of list of nodes with their layer number
-	 * 	c. list of the initial and output nodes
-	 * 
-	 */
+	
 	private Network architecture;
 	
 	
 
-	public Classifier(int[] architecture) {		
+	public Classifier(int[] network_layout) {		
 		List<Node[]> node_layers = new ArrayList<Node[]>();
-		int size = architecture.length;				
-		for(int i = 0; i< size - 1 ; i++) {			
-			int numNodes = architecture[i];
-			Node[] layer = createLayer(numNodes, i);
-			node_layers.add(layer);
+		int size = network_layout.length;			
+		int num_nodes = network_layout[0];
+		Node[] input_layer = new Node[num_nodes];
+		for(int i=0; i<num_nodes; i++) {			
+			input_layer[i] = new Node(0.0);			
 		}
-		//add the final layer, outisde of loop for -1 layerPos arg
-		node_layers.add(createLayer(architecture[size-1], -1));
+		node_layers.add(input_layer);
+		for(int i = 1; i< size; i++) {			
+			num_nodes = network_layout[i];
+			ActivatedNode[] layer = new ActivatedNode[num_nodes];
+			for(int j =0; j<num_nodes; j++) {
+				layer[i] = new ActivatedNode(-1.0, 1.0); //initial maxBias = 1 and minBias = -1
+			}			
+			node_layers.add(layer);	
+		}
 		this.architecture = new Network(node_layers, 0,0,0,0);
 		connectLayers();
 	}
 	
 	/**
-	 * if layerpos = 0, no parents
-	 * if layerpos = final layer, no children
+	 *
 	 * @param numNodes
 	 * @param layerPos
 	 * @return
 	 */
-	private ActivatedNode[] createLayer(int numNodes, int layerPos) {
-		ActivatedNode[] layer = new ActivatedNode[numNodes];
-		
-		for(int i=0; i < numNodes; i++) {
-			layer[i] = new ActivatedNode(-1.0, 1.0); //maxBias = 1, minBias = -1
-		}
-		
-	
+	private ActivatedNode[] createLayer(int numNodes) {
+		ActivatedNode[] layer = new ActivatedNode[numNodes];		
 		return layer;
 	}
 		
@@ -66,7 +59,7 @@ public class Classifier {
 		//only do hidden and input layer, output doesnt need to be run as no children to connect with
 		for(int i=0; i < len - 2; i++) {
 			Node[] parents = layers.get(i);
-			ActivatedNode[] children = layers.get(i)[0].getChildren();
+			ActivatedNode[] children = (ActivatedNode[])layers.get(i+1);
 			int p_len = parents.length;
 			int c_len = parents.length;
 			

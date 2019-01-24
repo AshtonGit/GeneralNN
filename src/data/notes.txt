@@ -32,4 +32,12 @@ For multiclass classificaiton,
 			classificaiton. This means prob splitting it into two methods. or splitting the Classifier
 			class into two classes. 
 			
-Need to make a large plan with daily weekly and monthly goals. This for all projects. 
+
+			
+			
+Data Parser
+
+for training and test sets, the real class values for each instance must be supplied for backprop and accuracy measures
+how to store class identity for all instances?
+
+how 

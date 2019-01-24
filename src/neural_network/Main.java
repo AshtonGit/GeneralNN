@@ -1,6 +1,7 @@
 package neural_network;
 
 import java.io.FileNotFoundException;
+import java.util.Set;
 
 public class Main {
 	
@@ -30,10 +31,11 @@ public class Main {
  * @throws FileNotFoundException 
  */
 	public static void main(String[] args) throws FileNotFoundException {
-		DataParser dt = new DataParser("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\debug_parser.txt", 3);
+		DataParser dt = new DataParser();
+		Set<double[]> instances = dt.readUnsupervisedFile("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\unsupervised.txt", 3);
 		
-		int[] architecture = new int[]{2,3,1};
-		double[] input = new double[] {0.5, 0.99};
+		int[] architecture = new int[]{3,3,1};
+		double[] input = new double[] {0.5, 0.99, 0.11};
 		Classifier NN = new Classifier(architecture);
 		double[] output = NN.classify(input);
 		System.out.println(output.toString());

@@ -77,7 +77,7 @@ public class DataParser {
 		}catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch(ArrayIndexOutOfBoundsException e) {
-			System.out.println("SYNTAX ERROR in "+filename+": The number of attributes at line "+instances.size()+" is greater than number given by user ("+num_attributes+")");
+			System.out.println("SYNTAX ERROR in "+filename+": The number of attributes at line "+instances.size()+" is differs from the amount given ("+num_attributes+")");
 			System.exit(0);
 		}
 		return instances;
