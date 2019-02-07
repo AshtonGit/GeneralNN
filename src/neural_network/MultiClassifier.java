@@ -13,18 +13,47 @@ import java.util.Set;
  */
 public class MultiClassifier extends Classifier{
 
-	private Network architecture;
+	
 	public MultiClassifier(int[] architecture) {
 		super(architecture);
-		this.architecture = super.getArchitecture();
-		// TODO Auto-generated constructor stub
 	}
 
 	
 	
 	@Override
 	public double[] forwardPropogate() {
-		return null;
+		Network architecture = super.getArchitecture();
+		List<Node[]> layers = architecture.getNodeNetwork();
+		int layer_count = layers.size();		
+		for(int i = 1; i < layer_count; i++) {
+			ActivatedNode[] layer = (ActivatedNode[])layers.get(i);
+			int node_count = layer.length;
+			if(i == layer_count -1) { //final layer of network uses softmax activation funciton
+				double[] pre_activ = new double[node_count];
+				for(int j=0; j<node_count; j++) {
+					pre_activ[j] = layer[j].evaluate();					
+				}
+				double[] activated = activationSoftMax(pre_activ);
+				for(int j=0; j<node_count; j++) {
+					layer[j].setOutput(activated[j]);
+				}
+			}else {
+				for(int j=0; j<node_count; j++) {
+					double output = layer[j].evaluate();
+					output = super.activationSigmoid(output);
+					layer[j].setOutput(output);
+				}
+			}
+			
+		}
+		//return output layer values as results
+		ActivatedNode[] output_layer = (ActivatedNode[])layers.get(layer_count-1);
+		int len = output_layer.length;
+		double[] results = new double[len];		
+		for(int i = 0; i < len; i++) {
+			results[i] = output_layer[i].getOutput();
+		}		
+		return results;
 	}
 	
 	@Override
@@ -35,10 +64,11 @@ public class MultiClassifier extends Classifier{
 	public void train(double[] instance, double[] targets) {		
 		classify(instance); 	
 		backPropogate(targets);		
-		
+		Network architecture = super.getArchitecture();
 		List<Node[]> layers = architecture.getNodeNetwork();
 		double n_learn = architecture.getLearnRate();
 		int num_layer = layers.size(); //update weights and biases
+		
 		for(int i=1; i<num_layer; i++) {//start from i=1 to skip the input layer
 		// need to incorporate momentum and flat_elim, need to use inputs, so use the array method
 			ActivatedNode[] layer = (ActivatedNode[]) layers.get(i); 
@@ -50,9 +80,9 @@ public class MultiClassifier extends Classifier{
 				for(Node parent: parents) {
 					double old_weight = weights.get(parent);
 					double	weight_delta = n_learn * neuron.getErrorSignal() * parent.getOutput();
-					weights.replace(parent, old_weight + weight_delta);										
+					weights.replace(parent, old_weight - weight_delta);										
 				}
-				double new_bias = neuron.getBias() + (n_learn * neuron.getErrorSignal());
+				double new_bias = neuron.getBias() - (n_learn * neuron.getErrorSignal());
 				neuron.setBias( new_bias );
 			}
 		}				
@@ -62,7 +92,7 @@ public class MultiClassifier extends Classifier{
 	
 	@Override
 	public void backPropogate(double[] target) {
-		List<Node[]> layers = this.architecture.getNodeNetwork();
+		List<Node[]> layers = super.getArchitecture().getNodeNetwork();
 		int output_indx = layers.size() - 1;
 		for(int i = output_indx; i >= 0; i--) { //move through network in reverse order, starting at output layer.
 			Node[] layer = layers.get(i);
@@ -88,11 +118,7 @@ public class MultiClassifier extends Classifier{
 	
 	
 	
-	
-	private double transferDerivativeSigmoid(double output) {
-		return output*(1 - output);
-	}
-	
+
 	
 	private double crossEntropyCost(double[] target, double[] results) {
 		double error = 0.0;

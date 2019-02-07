@@ -10,16 +10,13 @@ public class ActivatedNode extends Node{
 	 * how should bias be handled when coming to creating new nodes
 	 */
 	private double bias;
-	private double output;
-	private double error_signal;
 	private Map<Node, Double> weights;
-	private ActivatedNode[] children;
+	
 	
 	public ActivatedNode(double bias, Map<Node, Double> weights, ActivatedNode[] children) {
-		super(0.0);
+		super(0.0, children);
 		this.bias = bias;
 		this.weights = weights;
-		this.children = children;
 	}
 	
 	/**
@@ -63,22 +60,6 @@ public class ActivatedNode extends Node{
 		return this.weights.keySet();
 	}
 	
-	public ActivatedNode[] getChildren() {
-		return this.children;
-	}
-	
-	public void setChildren(ActivatedNode[] children) {
-		this.children = children;
-	}
-	
-	public void setErrorSignal(double error_signal) {
-		this.error_signal = error_signal;
-	}
-	
-	public double getErrorSignal() {
-		return this.error_signal;
-	}
-	
 	public double getBias() {
 		return this.bias;
 	}
@@ -101,14 +82,7 @@ public class ActivatedNode extends Node{
 		sum += this.bias;
 		return sum;
 	}
-	
-	public void setOutput(double output) {
-		this.output = output;
-	}
-	
-	public double getOutput() {		
-		return this.output;
-	}
+
 	
 	
 }

@@ -42,9 +42,9 @@ public class DataParser {
 				for(i = 0; i<num_attributes; i++) {	//parse attribute values
 					instance[i] = (double)Double.parseDouble(data[i]);					
 				}				
-				for(int j = 0; j<num_classes + num_attributes; j++) { //parse class identity values
+				for(int j = 0; j<num_classes; j++) { //parse class identity values
+					classes[j] = (double)Double.parseDouble(data[i]);	
 					i++;
-					classes[j] = (double)Double.parseDouble(data[i]);					
 				}
 				instances.put(instance, classes);
 			}	

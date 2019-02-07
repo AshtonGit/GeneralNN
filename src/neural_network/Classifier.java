@@ -34,34 +34,24 @@ public class Classifier {
 			num_nodes = network_layout[i];
 			ActivatedNode[] layer = new ActivatedNode[num_nodes];
 			for(int j =0; j<num_nodes; j++) {
-				layer[i] = new ActivatedNode(-1.0, 1.0); //initial maxBias = 1 and minBias = -1
+				layer[j] = new ActivatedNode(-1.0, 1.0); //initial maxBias = 1 and minBias = -1
 			}			
 			node_layers.add(layer);	
 		}
-		this.architecture = new Network(node_layers, 0,0,0,0);
+		this.architecture = new Network(node_layers, 0.2,0,0,0);
 		connectLayers();
 	}
 	
-	/**
-	 *
-	 * @param numNodes
-	 * @param layerPos
-	 * @return
-	 */
-	private ActivatedNode[] createLayer(int numNodes) {
-		ActivatedNode[] layer = new ActivatedNode[numNodes];		
-		return layer;
-	}
-		
+	
 	private void connectLayers() {
 		List<Node[]> layers = this.architecture.getNodeNetwork();
 		int len = layers.size();
 		//only do hidden and input layer, output doesnt need to be run as no children to connect with
-		for(int i=0; i < len - 2; i++) {
+		for(int i=0; i < len - 1; i++) {
 			Node[] parents = layers.get(i);
 			ActivatedNode[] children = (ActivatedNode[])layers.get(i+1);
 			int p_len = parents.length;
-			int c_len = parents.length;
+			int c_len = children.length;
 			
 			for(int p = 0; p < p_len; p++) {
 				parents[p].setChildren(children);
@@ -76,8 +66,7 @@ public class Classifier {
 	
 	public void train(double[] instance, double[] targets) {		
 		classify(instance); 	
-		backPropogate(targets);		
-		
+		backPropogate(targets);				
 		List<Node[]> layers = architecture.getNodeNetwork();
 		double n_learn = architecture.getLearnRate();
 		int num_layer = layers.size(); //update weights and biases
@@ -215,12 +204,12 @@ public class Classifier {
 	 * @param output
 	 * @return
 	 */
-	private double transferDerivativeSigmoid(double output) {
+	protected double transferDerivativeSigmoid(double output) {
 		return output*(1 - output);
 	}
 	
 	
-	private double meanSquaredError(double target, double output) {
+	protected double meanSquaredError(double target, double output) {
 		return Math.pow(target - output, 2) / 2;
 	}
 	
@@ -229,7 +218,7 @@ public class Classifier {
 	 * @param output
 	 * @return
 	 */
-	private double activationSigmoid(double output) {
+	protected double activationSigmoid(double output) {
 		double euler = Math.exp(-output);
 		return 1 / (1 + euler );
 	}
