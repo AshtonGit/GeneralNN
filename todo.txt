@@ -1,0 +1,8 @@
+delete unused classes and imports
+refactor so names easier to understand
+comment code 
+implement a GUI
+implement unit tests
+implement a save function/ write to file function.
+tidy up prints and debugging
+implement logging 

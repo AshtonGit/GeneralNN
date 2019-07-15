@@ -10,41 +10,38 @@ public class ActivatedNode extends Node{
 	 * how should bias be handled when coming to creating new nodes
 	 */
 	private double bias;
+	private double error_signal;
 	private Map<Node, Double> weights;
 	
 	
-	public ActivatedNode(double bias, Map<Node, Double> weights, ActivatedNode[] children) {
-		super(0.0, children);
+	public ActivatedNode(double bias, double error_signal, Map<Node, Double> weights, ActivatedNode[] children) {
+		super( 0.0, children);
 		this.bias = bias;
+		this.error_signal = error_signal;
 		this.weights = weights;
+		
 	}
 	
 	/**
-	 * node with random params and no parents yet
+	 * node with the bias and weights randomly initialized from a given range.
 	 */
-	public ActivatedNode(double max, double min) {
-		super(0.0);
+	public ActivatedNode(double maxBias, double minBias, double minW, double maxW, double error_signal, Node[] parents, ActivatedNode[] children){
+		super(0.0, children);
 		Random rand = new Random();
-		this.bias = min + (max - min) * rand.nextDouble();
+		this.bias = minBias + (maxBias - minBias) * rand.nextDouble();	
+		this.error_signal = 0;
 		this.weights = new HashMap<Node, Double>();
+		setParentRandWeight(parents, minW, maxW);
+		BinaryClassifier clas = new BinaryClassifier(null, error_signal, error_signal, error_signal, error_signal);
+		clas.dmax = 2;
 	}
 	
-	public ActivatedNode(double bias) {
-		super(0.0);
-		this.bias = bias;
-		this.weights= new HashMap<Node, Double>();
-	}
-	
-	public void setParentRandWeight(Node[] parent_array	, double min, double max) {
-		//randomly generate weights
-		int len = parent_array.length;
+	public void setParentRandWeight(Node[] parents, double min, double max) {		
 		Random rand = new Random();
-		for(int i=0; i< len; i++) {			
+		for(Node parent : parents) {			
 			double weight = min + (max - min) * rand.nextDouble();
-			weights.put(parent_array[i], weight);
+			weights.put(parent, weight);
 		}
-		
-		
 	}
 	
 	public Map<Node, Double> getWeights(){
@@ -52,9 +49,7 @@ public class ActivatedNode extends Node{
 	}
 	public void setWeights(Map<Node, Double> weights) {
 		this.weights = weights;
-	}
-	
-	
+	}	
 	
 	public Set<Node> getParentNodes() {
 		return this.weights.keySet();
@@ -66,6 +61,14 @@ public class ActivatedNode extends Node{
 	
 	public void setBias(double bias) {
 		this.bias = bias;
+	}
+	
+	public void setErrorSignal(double error_signal) {
+	    this.error_signal = error_signal;
+	}
+	
+	public double getErrorSignal() {
+	    return this.error_signal;
 	}
 	
 	/**

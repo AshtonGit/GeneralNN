@@ -14,96 +14,24 @@ import java.util.Set;
 public class MultiClassifier extends Classifier{
 
 	
-	public MultiClassifier(int[] architecture) {
-		super(architecture);
+	public MultiClassifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) {
+		super(layout, n_learn, dmax, momentum, flat_elim);
 	}
 
-	
-	
-	@Override
-	public double[] forwardPropogate() {
-		Network architecture = super.getArchitecture();
-		List<Node[]> layers = architecture.getNodeNetwork();
-		int layer_count = layers.size();		
-		for(int i = 1; i < layer_count; i++) {
-			ActivatedNode[] layer = (ActivatedNode[])layers.get(i);
-			int node_count = layer.length;
-			if(i == layer_count -1) { //final layer of network uses softmax activation funciton
-				double[] pre_activ = new double[node_count];
-				for(int j=0; j<node_count; j++) {
-					pre_activ[j] = layer[j].evaluate();					
-				}
-				double[] activated = activationSoftMax(pre_activ);
-				for(int j=0; j<node_count; j++) {
-					layer[j].setOutput(activated[j]);
-				}
-			}else {
-				for(int j=0; j<node_count; j++) {
-					double output = layer[j].evaluate();
-					output = super.activationSigmoid(output);
-					layer[j].setOutput(output);
-				}
-			}
-			
-		}
-		//return output layer values as results
-		ActivatedNode[] output_layer = (ActivatedNode[])layers.get(layer_count-1);
-		int len = output_layer.length;
-		double[] results = new double[len];		
-		for(int i = 0; i < len; i++) {
-			results[i] = output_layer[i].getOutput();
-		}		
-		return results;
-	}
-	
-	@Override
-	/**
-	 *If NN fails to learn correctly, the issue may be that weight delta is added to old weight instead of subtracted. 
-	 *	Have found both methods used in different sources / texts. My interpretation may be incorrect 
-	 */
-	public void train(double[] instance, double[] targets) {		
-		classify(instance); 	
-		backPropogate(targets);		
-		Network architecture = super.getArchitecture();
-		List<Node[]> layers = architecture.getNodeNetwork();
-		double n_learn = architecture.getLearnRate();
-		int num_layer = layers.size(); //update weights and biases
-		
-		for(int i=1; i<num_layer; i++) {//start from i=1 to skip the input layer
-		// need to incorporate momentum and flat_elim, need to use inputs, so use the array method
-			ActivatedNode[] layer = (ActivatedNode[]) layers.get(i); 
-			int layer_len = layer.length;
-			for(int j = 0; j < layer_len; j++) {
-				ActivatedNode neuron = layer[j];
-				Map<Node, Double> weights = neuron.getWeights();
-				Set<Node> parents = neuron.getParentNodes();
-				for(Node parent: parents) {
-					double old_weight = weights.get(parent);
-					double	weight_delta = n_learn * neuron.getErrorSignal() * parent.getOutput();
-					weights.replace(parent, old_weight - weight_delta);										
-				}
-				double new_bias = neuron.getBias() - (n_learn * neuron.getErrorSignal());
-				neuron.setBias( new_bias );
-			}
-		}				
-	}
-
-	
-	
-	@Override
-	public void backPropogate(double[] target) {
-		List<Node[]> layers = super.getArchitecture().getNodeNetwork();
-		int output_indx = layers.size() - 1;
+   	@Override
+	public List<Node[]> backPropagate(double[] target, List<Node[]> network) {
+		int output_indx = network.size() - 1;
 		for(int i = output_indx; i >= 0; i--) { //move through network in reverse order, starting at output layer.
-			Node[] layer = layers.get(i);
+			ActivatedNode[] layer = (ActivatedNode[])network.get(i);
 			int num_nodes = layer.length;			
 			if(i == output_indx) { //output layer				
-				for(int j =0; j<num_nodes; j++) {					
-					layer[j].setErrorSignal(layer[j].getOutput() - target[j]);
+				for(int j =0; j<num_nodes; j++) {	
+				    double output = layer[j].getOutput();
+				    double error_signal = output - target[j];				    
+					layer[j].setErrorSignal(error_signal);
 				}
-			}else { //hidden layer
-				for(int j =0; j<num_nodes; j++) {
-					Node neuron = layer[j];
+			}else {
+				for(ActivatedNode neuron : layer) {					
 					double neuron_error = 0.0;
 					for(ActivatedNode child: neuron.getChildren()) {
 						double weight = child.getWeights().get(neuron);
@@ -113,34 +41,78 @@ public class MultiClassifier extends Classifier{
 				}				
 			}			
 		}
+		return network;
 	}
 	
 	
 	
 	
-
+	/**
+     * sets values of the input nodes in networks first layer.
+     * values are doubles stored in an array
+     * 
+     *  TO DO:
+     *  **ensure inputs match number of outputs else throw error
+     * @param input
+     */
+    @Override
+    public double[] classify(double[] input, List<Node[]> network) {
+        //apply inputs
+        Node[] input_layer = network.get(0);
+        int len = input_layer.length;
+        if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception
+        else {
+            for(int i=0; i<len; i++) {
+                input_layer[i].setOutput(input[i]);
+            }
+        }
+        //classify instances
+        int layer_count = network.size();       
+        for(int i = 1; i < layer_count; i++) {
+            ActivatedNode[] layer = (ActivatedNode[])network.get(i);
+            int node_count = layer.length;
+            if(i == layer_count -1) { //final layer of network uses softmax activation funciton
+                double[] pre_activ = new double[node_count];
+                for(int j=0; j<node_count; j++) {
+                    pre_activ[j] = layer[j].evaluate();                 
+                }
+                double[] activated = activationSoftMax(pre_activ);
+                for(int j=0; j<node_count; j++) {
+                    layer[j].setOutput(activated[j]);
+                }
+            }else {
+                for(int j=0; j<node_count; j++) {
+                    double output = layer[j].evaluate();
+                    output = super.activationSigmoid(output);
+                    layer[j].setOutput(output);
+                }
+            }            
+        }
+        //return output layer values as results
+        ActivatedNode[] output_layer = (ActivatedNode[])network.get(layer_count-1);
+        len = output_layer.length;
+        double[] results = new double[len];     
+        for(int i = 0; i < len; i++) {
+            results[i] = output_layer[i].getOutput();
+        }       
+        return results;
+        
+    }
+    
+    
+    private double[] activationSoftMax(double[] output) {
+        double[] softmax = new double[output.length];
+        double sum = 0.0;
+        int len = output.length;
+        double e = Math.E;
+        for(double o: output) {
+            sum += Math.pow(e, o);
+        }
+        for(int i = 0; i<len; i++) {
+            softmax[i] = Math.pow(e, output[i]) / sum;
+        }
+        return softmax;
+    }
 	
-	private double crossEntropyCost(double[] target, double[] results) {
-		double error = 0.0;
-		double len = target.length;
-		for(int i=0; i<len; i++) {
-			error -= (results[i] * Math.log(target[i]));
-		}
-		return error;
-	}
 	
-	
-	private double[] activationSoftMax(double[] output) {
-		double[] softmax = new double[output.length];
-		double sum = 0.0;
-		double len = output.length;
-		double e = Math.E;
-		for(double o: output) {
-			sum += Math.pow(e, o);
-		}
-		for(int i = 0; i<len; i++) {
-			softmax[i] = Math.pow(e, output[i]) / sum;
-		}
-		return softmax;
-	}
 }
