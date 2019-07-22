@@ -10,7 +10,7 @@ public class Control {
 	private MultiClassifier multi;
 	
 	public Control() {
-		this.state = 0; //create an enum??
+		this.state = 0; 
 	}
 
 	
@@ -38,33 +38,82 @@ public class Control {
 
 
 	
-	public String trainNN(String input) {
+	
+	private String testNN(String input) {
 		
 		return "";
 	}
 	
-	public String testNN(String input) {
-		
-		return "";
+	
+	private static List<Map<double[], double[]>> trainTestSplit(Map<double[], double[]> instances, double trainRatio){	
+	    assert(trainRatio >0 && trainRatio <= 1);
+	    
+	    List<Map<double[], double[]>> split = new ArrayList<Map<double[], double[]>>();
+	    Map<double[], double[]> train = new HashMap<double[], double[]>();
+	    Map<double[], double[]> test = new HashMap<double[], double[]>();	   
+	    
+	    List<double[]> keys = new ArrayList<double[]>(instances.keySet());
+	    Collections.shuffle(keys);
+	    double len = keys.size();
+	    int trainCount = (int)(len * trainRatio);
+	    int i =0;
+	    for(double[] instance : keys) {
+	        if( i > trainCount) test.put(instance, instances.get(instance));
+	        else {
+	            train.put(instance, instances.get(instance));
+	        }
+	        i++;
+	    }
+	    split.add(train);
+	    split.add(test);
+	    return split;
 	}
 	
-	/***
-	 * Prints out glossary of commands to the console to help users 
-	 * see functionality. 
-	 * @return
-	 */
-	public String help() {
-		return "";
-	}
-	
+
+
 	
 	
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		DataParser dt = new DataParser();
-		Map<double[], double[]> instances = dt.readSupervisedFile("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\iris.data.txt", 4, 3);
-		int[] architecture = new int[]{4,3,3};
+		Map<double[], double[]> instances = dt.readSupervisedInstances("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\iris.data.txt", 4, 3);
 		
+		int[] layout = new int[]{4,3,3};
+		MultiClassifier classifier = new MultiClassifier(layout, 0.2, 0,0,0);
+		List<Map<double[], double[]>> trainTestSplit = trainTestSplit(instances, 0.8);
+		Map<double[], double[]> train = trainTestSplit.get(0);
+		Map<double[], double[]> test = trainTestSplit.get(1);
+		for(int epoch = 0; epoch < 3; epoch ++) {
+		    for(double[] instance : train.keySet()) {
+	            classifier.train(instance, instances.get(instance), classifier.network);
+	        }
+		}
+		
+		int correct = 0;
+		for(double[] instance : test.keySet()) {
+		   double[] result = classifier.classify(instance, classifier.network);
+		   
+		   int prediction = 0;
+		   double max = result[0];
+		   for(int i = 1; i < result.length; i++) {
+		       if(max < result[i]) prediction = i; max = result[i];
+		   }
+		   int actual = 0;
+		   double[] target = test.get(instance); 
+		   for(int i =0; i<target.length; i++) {
+		       if(target[i] == 1) {
+		           actual = i;
+		           break;
+		       }
+		   }
+		   if(prediction == actual) correct++;
+		}	
+		
+		double accuracy = (double)correct / test.size();
+		
+		System.out.println("Classifier accuracy : "+accuracy);
+		System.out.println("Correctly Indentified : "+correct);
+		System.out.println("Incorrectly Identified: " +(test.size() - correct));
 	}
 	
 	

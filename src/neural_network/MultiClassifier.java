@@ -21,13 +21,12 @@ public class MultiClassifier extends Classifier{
    	@Override
 	public List<Node[]> backPropagate(double[] target, List<Node[]> network) {
 		int output_indx = network.size() - 1;
-		for(int i = output_indx; i >= 0; i--) { //move through network in reverse order, starting at output layer.
+		for(int i = output_indx; i > 0; i--) { //move through network in reverse order, starting at output layer.
 			ActivatedNode[] layer = (ActivatedNode[])network.get(i);
 			int num_nodes = layer.length;			
 			if(i == output_indx) { //output layer				
-				for(int j =0; j<num_nodes; j++) {	
-				    double output = layer[j].getOutput();
-				    double error_signal = output - target[j];				    
+				for(int j =0; j<num_nodes; j++) {
+				    double error_signal = layer[j].getOutput() - target[j];				    
 					layer[j].setErrorSignal(error_signal);
 				}
 			}else {

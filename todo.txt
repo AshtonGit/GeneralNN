@@ -1,8 +1,8 @@
-delete unused classes and imports
-refactor so names easier to understand
+
 comment code 
 implement a GUI
 implement unit tests
-implement a save function/ write to file function.
+implement a save/load function for trained Neural Networks
 tidy up prints and debugging
 implement logging 
+create some kind of error handling stack / procedure / standard when throwing exceptions

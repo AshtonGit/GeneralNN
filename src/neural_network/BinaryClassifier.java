@@ -3,18 +3,11 @@ package neural_network;
 import java.util.*;
 public class BinaryClassifier extends Classifier{
 
-    /**
-	 *create some kind of error handling stack / procedure / standard when throwing errors
-	 */
-	
+
 	
 
 	
 /**
- * issues
- * 1. Input node initialization assumes that number of layers > 1. Need to input asserts etc that 
- * ensure that requirement is met or some try catch exception. 
- *  
  * 
  * 
  * @param layout
@@ -27,11 +20,7 @@ public class BinaryClassifier extends Classifier{
 	
 	
 	/**
-	 * Error is squared so that smaller errors have a smaller effect on the weight updates, while
-	 * larger errors are emphasized even moreso in their effect on the new weight values. 
-	 * calculating error using the simpler method found in  https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
-	 *Stochastic gradient descent. 
-	 *
+	 * 
 	 *binary classification
 	 * @param result
 	 * @param target

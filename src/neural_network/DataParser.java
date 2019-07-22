@@ -4,30 +4,9 @@ package neural_network;
 import java.io.*;
 import java.util.*;
 public class DataParser {
-	/**
-	 * 
-	 */
-	
-	
-	
-
-	/**
-	 *
-	 * 	
-	 * 	
-	 * 
-	 *
-	 * @param filename
-	 * @param num_attributes
-	 * @param num_classes Optional argument, used for training and test data sets. Value is equal to number of possible outputs/classes. 
-	 * @throws FileNotFoundException
-	 */
-	public DataParser(){
 		
-	}
 	
-	
-	public Map<double[], double[]> readSupervisedFile(String filename, int num_attributes, int num_classes){
+	public static Map<double[], double[]> readSupervisedInstances(String filename, int num_attributes, int num_classes){
 		File file = new File(filename);
 		Scanner sc;		
 		Map<double[], double[]> instances = new HashMap<double[], double[]>();
@@ -58,7 +37,7 @@ public class DataParser {
 		return instances;
 	}
 	
-	public Set<double[]> readUnsupervisedFile(String filename, int num_attributes){
+	public Set<double[]> readUnsupervisedInstances(String filename, int num_attributes){
 		File file = new File(filename);
 		Scanner sc;
 		Set<double[]> instances = new HashSet<double[]>();

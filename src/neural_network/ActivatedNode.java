@@ -4,11 +4,7 @@ import java.util.*;
 public class ActivatedNode extends Node{
 
 	
-	/**
-	 * create a node interface?? hidden node, input node, output node all fufill it
-	 * 
-	 * how should bias be handled when coming to creating new nodes
-	 */
+
 	private double bias;
 	private double error_signal;
 	private Map<Node, Double> weights;
@@ -31,9 +27,8 @@ public class ActivatedNode extends Node{
 		this.bias = minBias + (maxBias - minBias) * rand.nextDouble();	
 		this.error_signal = 0;
 		this.weights = new HashMap<Node, Double>();
-		setParentRandWeight(parents, minW, maxW);
-		BinaryClassifier clas = new BinaryClassifier(null, error_signal, error_signal, error_signal, error_signal);
-		clas.dmax = 2;
+		setParentRandWeight(parents, minW, maxW);		
+		
 	}
 	
 	public void setParentRandWeight(Node[] parents, double min, double max) {		
