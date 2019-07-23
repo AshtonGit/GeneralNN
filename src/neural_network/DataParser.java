@@ -37,7 +37,7 @@ public class DataParser {
 		return instances;
 	}
 	
-	public Set<double[]> readUnsupervisedInstances(String filename, int num_attributes){
+	public static Set<double[]> readUnsupervisedInstances(String filename, int num_attributes){
 		File file = new File(filename);
 		Scanner sc;
 		Set<double[]> instances = new HashSet<double[]>();
@@ -61,6 +61,32 @@ public class DataParser {
 		}
 		return instances;
 	}
+	
+    public static List<Map<double[], double[]>> trainTestSplit(Map<double[], double[]> instances, double trainRatio){  
+        assert(trainRatio >0 && trainRatio <= 1);
+        
+        List<Map<double[], double[]>> split = new ArrayList<Map<double[], double[]>>();
+        Map<double[], double[]> train = new HashMap<double[], double[]>();
+        Map<double[], double[]> test = new HashMap<double[], double[]>();      
+        
+        List<double[]> keys = new ArrayList<double[]>(instances.keySet());
+        Collections.shuffle(keys);
+        double len = keys.size();
+        int trainCount = (int)(len * trainRatio);
+        int i =0;
+        for(double[] instance : keys) {
+            if( i > trainCount) test.put(instance, instances.get(instance));
+            else {
+                train.put(instance, instances.get(instance));
+            }
+            i++;
+        }
+        split.add(train);
+        split.add(test);
+        return split;
+    }
+    
+
 	
 
 	

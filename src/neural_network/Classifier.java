@@ -27,7 +27,9 @@ public abstract class Classifier {
      * @param flat_elim
      */
     
-    public Classifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) {   
+    public Classifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) throws IllegalArgumentException{
+        validateLearningParams(n_learn, dmax, momentum, flat_elim);
+        validateNetworkLayout(layout);
         this.n_learn = n_learn;
         this.dmax = dmax;
         this.momentum = momentum;
@@ -87,6 +89,7 @@ public abstract class Classifier {
      *  Have found both methods used in different sources / texts.
      */
     public void train(double[] instance, double[] targets, List<Node[]> network) {        
+        validateTargetData(targets, network);
         classify(instance, network);     
         network = backPropagate(targets, network);    
         int num_layer = network.size(); //update weights and biases
@@ -108,12 +111,36 @@ public abstract class Classifier {
         }               
     }
     
+    
+    protected void validateLearningParams(double n_learn, double dmax, double momentum, double flat_elim) throws IllegalArgumentException{
+        if(n_learn <= 0) throw new IllegalArgumentException("Learning rate must be greater than 0");
+        if(dmax < 0) throw new IllegalArgumentException("dmax must be greater than or equal to 0");
+        if(momentum < 0)throw new IllegalArgumentException("momentum must be greater than or equal to 0");
+        if(flat_elim < 0)throw new IllegalArgumentException("flat_elim must be greater than or equal to 0");
+       
+    }
+    
+    protected void validateNetworkLayout(int[] layout) throws IllegalArgumentException{
+        if(layout.length < 3)throw new IllegalArgumentException("Insufficient layout length. Networks require a minimum of 3 layers");        
+        for(int x : layout)if(x < 1) throw new IllegalArgumentException("Each layer requires at least 1 Node");
+    }
+    
+    protected void validateInputData(double[] instance, List<Node[]> network) {
+        Node[] inputLayer = network.get(0);
+        if(instance.length != inputLayer.length)throw new IllegalArgumentException("Number of data points for instance must match number of inputs for network");
+    }
+    
+    protected void validateTargetData(double[] instance, List<Node[]> network) {
+        Node[] outputLayer = network.get(network.size() - 1);
+        if(instance.length != outputLayer.length) throw new IllegalArgumentException("Number of data points for instance must match number of outputs for network");
+    }
+    
     protected double meanSquaredError(double target, double output) {
         return Math.pow(target - output, 2) / 2;
     }
     
 
-    
+       
     /**
      * Activation function
      * @param output
@@ -124,6 +151,17 @@ public abstract class Classifier {
         return 1 / (1 + euler );
     }
     
+    /**
+     * reLU activation function. 
+     * @param output
+     * @return
+     */
+    protected double activationRelu(double output) {
+        if(output < 0)return output * 0.01;
+        else {
+            return output;
+        }
+    }
 
     /**
      * Used to calculate the slope of an output neuron for neurons that used the sigmoid 
@@ -149,11 +187,7 @@ public abstract class Classifier {
         return this.momentum;
     }
     
-    
-    
-    
-    
-    
-    
-    
+ 
 }
+
+

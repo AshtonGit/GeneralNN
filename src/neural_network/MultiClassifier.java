@@ -57,6 +57,7 @@ public class MultiClassifier extends Classifier{
     @Override
     public double[] classify(double[] input, List<Node[]> network) {
         //apply inputs
+        validateInputData(input, network);
         Node[] input_layer = network.get(0);
         int len = input_layer.length;
         if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception

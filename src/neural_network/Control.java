@@ -45,29 +45,7 @@ public class Control {
 	}
 	
 	
-	private static List<Map<double[], double[]>> trainTestSplit(Map<double[], double[]> instances, double trainRatio){	
-	    assert(trainRatio >0 && trainRatio <= 1);
-	    
-	    List<Map<double[], double[]>> split = new ArrayList<Map<double[], double[]>>();
-	    Map<double[], double[]> train = new HashMap<double[], double[]>();
-	    Map<double[], double[]> test = new HashMap<double[], double[]>();	   
-	    
-	    List<double[]> keys = new ArrayList<double[]>(instances.keySet());
-	    Collections.shuffle(keys);
-	    double len = keys.size();
-	    int trainCount = (int)(len * trainRatio);
-	    int i =0;
-	    for(double[] instance : keys) {
-	        if( i > trainCount) test.put(instance, instances.get(instance));
-	        else {
-	            train.put(instance, instances.get(instance));
-	        }
-	        i++;
-	    }
-	    split.add(train);
-	    split.add(test);
-	    return split;
-	}
+
 	
 
 
@@ -75,12 +53,12 @@ public class Control {
 	
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		DataParser dt = new DataParser();
-		Map<double[], double[]> instances = dt.readSupervisedInstances("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\iris.data.txt", 4, 3);
+		
+		Map<double[], double[]> instances = DataParser.readSupervisedInstances("C:\\Users\\Ashton\\eclipse-workspace\\NNImageClassifier\\src\\data\\iris.data.txt", 4, 3);
 		
 		int[] layout = new int[]{4,3,3};
 		MultiClassifier classifier = new MultiClassifier(layout, 0.2, 0,0,0);
-		List<Map<double[], double[]>> trainTestSplit = trainTestSplit(instances, 0.8);
+		List<Map<double[], double[]>> trainTestSplit = DataParser.trainTestSplit(instances, 0.8);
 		Map<double[], double[]> train = trainTestSplit.get(0);
 		Map<double[], double[]> test = trainTestSplit.get(1);
 		for(int epoch = 0; epoch < 3; epoch ++) {
