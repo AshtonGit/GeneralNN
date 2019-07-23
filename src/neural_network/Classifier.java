@@ -9,48 +9,7 @@ public abstract class Classifier {
     
     
 
-    List<Node[]> network;
-    double n_learn;
-    double dmax;
-    double momentum;
-    double flat_elim;
-    /**
-     * issues
-     * 1. Input node initialization assumes that number of layers > 1. Need asserts that 
-     * ensure that number of layers >= 3 so there is input layer, hidden layer, output layer
-     *  
-     * 
-     * @param layout
-     * @param n_learn
-     * @param dmax
-     * @param momentum
-     * @param flat_elim
-     */
-    
-    public Classifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) throws IllegalArgumentException{
-        validateLearningParams(n_learn, dmax, momentum, flat_elim);
-        validateNetworkLayout(layout);
-        this.n_learn = n_learn;
-        this.dmax = dmax;
-        this.momentum = momentum;
-        this.flat_elim = flat_elim;
-        this.network = new ArrayList<Node[]>();        
-        int size = layout.length;           
-        int num_nodes = layout[0];
-        Node[] input_layer = new Node[num_nodes];
-        for(int i=0; i<num_nodes; i++) {            
-            input_layer[i] = new Node(0.0, layout[1]);            
-        }
-        network.add(input_layer);
-        for(int i = 1; i< size; i++) {          
-            num_nodes = layout[i];
-            ActivatedNode[] layer = new ActivatedNode[num_nodes];
-            for(int j =0; j< num_nodes; j++) {
-               layer[j] = new ActivatedNode(-1.0, 1.0, -1.0, 1.0, 0.0, network.get(i-1), null); //initial maxBias = 1 and minBias = -1
-            }           
-            network.add(layer); 
-        }
-        network = connectLayers(network);
+    public Classifier(){
         
     }
     
@@ -58,29 +17,32 @@ public abstract class Classifier {
     
     public abstract List<Node[]> backPropagate(double[] target, List<Node[]> network );
     
-    /**
-     * 
-     * @param layers
-     * @return
-     */
-    private List<Node[]> connectLayers(List<Node[]> network) {        
-        int len = network.size();
-        //only do hidden and input layer, output doesnt need to be run as no children to connect with
-        for(int i=0; i < len - 1; i++) {
-            Node[] parents = network.get(i);
-            ActivatedNode[] children = (ActivatedNode[])network.get(i+1);
-            int p_len = parents.length;
-            int c_len = children.length;
-            
-            for(int p = 0; p < p_len; p++) {
-                parents[p].setChildren(children);
-            }
-            
-            for(int c = 0 ; c< c_len; c++) {
-                children[c].setParentRandWeight(parents, -1.0, 1.0);
-            }
-        }        
-        return network;
+    public List<Node[]> buildNeuralNetwork(int[] layout, double minW, double maxW){
+        validateNetworkLayout(layout);        
+        List<Node[]> network = new ArrayList<Node[]>();
+         int layerCount = layout.length;
+         int nodeCount = layout[0];
+         Node[] input_layer = new Node[nodeCount];
+         for(int i=0; i<nodeCount; i++) {
+             input_layer[i] = new Node(0.0, layout[1]);
+         }
+         network.add(input_layer);
+         for(int i =1; i<layerCount; i++) {
+             nodeCount = layout[i];
+             ActivatedNode[] layer = new ActivatedNode[nodeCount];
+             for(int j =0; j<nodeCount; j++) {
+                 //cannot provide the children arg to constructor yet as that layer has not been created yet
+                 layer[j] = new ActivatedNode(minW, maxW, 0.0, network.get(i-1), null);
+             }
+             network.add(layer);
+         }
+         //connect the parents to their children, skipping output layer as it doesnt have children to connect with
+         int len = network.size();         
+         for(int i=0; i < len - 1; i++) {             
+             ActivatedNode[] children = (ActivatedNode[])network.get(i+1);        
+             for(Node parent : network.get(i))parent.setChildren(children);                         
+         }        
+         return network;
     }
     
     
@@ -88,10 +50,11 @@ public abstract class Classifier {
      *If NN fails to learn correctly, the issue may be that weight delta is added to old weight instead of subtracted. 
      *  Have found both methods used in different sources / texts.
      */
-    public void train(double[] instance, double[] targets, List<Node[]> network) {        
-        validateTargetData(targets, network);
+    public List<Node[]> train(double[] instance, double[] target, List<Node[]> network, double learn_rate) {        
+        validateTargetData(target, network);
+        validateLearningParams(learn_rate, 0.0,0.0,0.0);
         classify(instance, network);     
-        network = backPropagate(targets, network);    
+        network = backPropagate(target, network);    
         int num_layer = network.size(); //update weights and biases
         
         for(int i=1; i<num_layer; i++) {//start from i=1 to skip the input layer
@@ -102,17 +65,18 @@ public abstract class Classifier {
                 Set<Node> parents = neuron.getParentNodes();
                 for(Node parent: parents) {
                     double old_weight = weights.get(parent);
-                    double  weight_delta = n_learn * neuron.getErrorSignal() * parent.getOutput();
+                    double  weight_delta = learn_rate * neuron.getErrorSignal() * parent.getOutput();
                     weights.replace(parent, old_weight - weight_delta);                                     
                 }
-                double new_bias = neuron.getBias() - (n_learn * neuron.getErrorSignal());
+                double new_bias = neuron.getBias() - (learn_rate * neuron.getErrorSignal());
                 neuron.setBias( new_bias );
             }
-        }               
+        }           
+        return network;
     }
     
     
-    protected void validateLearningParams(double n_learn, double dmax, double momentum, double flat_elim) throws IllegalArgumentException{
+    public static void validateLearningParams(double n_learn, double dmax, double momentum, double flat_elim) throws IllegalArgumentException{
         if(n_learn <= 0) throw new IllegalArgumentException("Learning rate must be greater than 0");
         if(dmax < 0) throw new IllegalArgumentException("dmax must be greater than or equal to 0");
         if(momentum < 0)throw new IllegalArgumentException("momentum must be greater than or equal to 0");
@@ -120,22 +84,22 @@ public abstract class Classifier {
        
     }
     
-    protected void validateNetworkLayout(int[] layout) throws IllegalArgumentException{
+    public static void validateNetworkLayout(int[] layout) throws IllegalArgumentException{
         if(layout.length < 3)throw new IllegalArgumentException("Insufficient layout length. Networks require a minimum of 3 layers");        
         for(int x : layout)if(x < 1) throw new IllegalArgumentException("Each layer requires at least 1 Node");
     }
     
-    protected void validateInputData(double[] instance, List<Node[]> network) {
+    public static void validateInputData(double[] instance, List<Node[]> network) {
         Node[] inputLayer = network.get(0);
         if(instance.length != inputLayer.length)throw new IllegalArgumentException("Number of data points for instance must match number of inputs for network");
     }
     
-    protected void validateTargetData(double[] instance, List<Node[]> network) {
+    public static void validateTargetData(double[] instance, List<Node[]> network) {
         Node[] outputLayer = network.get(network.size() - 1);
         if(instance.length != outputLayer.length) throw new IllegalArgumentException("Number of data points for instance must match number of outputs for network");
     }
     
-    protected double meanSquaredError(double target, double output) {
+    public static double meanSquaredError(double target, double output) {
         return Math.pow(target - output, 2) / 2;
     }
     
@@ -146,7 +110,7 @@ public abstract class Classifier {
      * @param output
      * @return
      */
-    protected double activationSigmoid(double output) {
+    public static double activationSigmoid(double output) {
         double euler = Math.exp(-output);
         return 1 / (1 + euler );
     }
@@ -156,7 +120,7 @@ public abstract class Classifier {
      * @param output
      * @return
      */
-    protected double activationRelu(double output) {
+    public static double activationRelu(double output) {
         if(output < 0)return output * 0.01;
         else {
             return output;
@@ -170,23 +134,12 @@ public abstract class Classifier {
      * @param output
      * @return
      */
-    protected double transferDerivativeSigmoid(double output) {
+    public static double transferDerivativeSigmoid(double output) {
         return output*(1 - output);
     }
         
     
-    public List<Node[]> getNetwork(){
-        return this.network;
-    }
-    
-    public double getLearnRate() {
-        return this.n_learn;
-    }
-    
-    public double getMomentum() {
-        return this.momentum;
-    }
-    
+   
  
 }
 

@@ -14,8 +14,8 @@ import java.util.Set;
 public class MultiClassifier extends Classifier{
 
 	
-	public MultiClassifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) {
-		super(layout, n_learn, dmax, momentum, flat_elim);
+	public MultiClassifier() {
+		super();
 	}
 
    	@Override
@@ -60,11 +60,8 @@ public class MultiClassifier extends Classifier{
         validateInputData(input, network);
         Node[] input_layer = network.get(0);
         int len = input_layer.length;
-        if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception
-        else {
-            for(int i=0; i<len; i++) {
-                input_layer[i].setOutput(input[i]);
-            }
+        for(int i=0; i<len; i++) {
+            input_layer[i].setOutput(input[i]);
         }
         //classify instances
         int layer_count = network.size();       
@@ -100,7 +97,7 @@ public class MultiClassifier extends Classifier{
     }
     
     
-    private double[] activationSoftMax(double[] output) {
+    public static double[] activationSoftMax(double[] output) {
         double[] softmax = new double[output.length];
         double sum = 0.0;
         int len = output.length;

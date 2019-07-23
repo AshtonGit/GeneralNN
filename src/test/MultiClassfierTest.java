@@ -11,6 +11,7 @@ import org.junit.Test;
 import neural_network.Classifier;
 import neural_network.DataParser;
 import neural_network.MultiClassifier;
+import neural_network.Node;
 
 public class MultiClassfierTest {
     
@@ -22,19 +23,20 @@ public class MultiClassfierTest {
     public void testAccuracyIris() {
         Map<double[], double[]> instances = DataParser.readSupervisedInstances("src/data/iris.data.txt", 4, 3);        
         int[] layout = new int[]{4,3,3};
-        MultiClassifier classifier = new MultiClassifier(layout, 0.2, 0,0,0);
+        MultiClassifier classifier = new MultiClassifier();
+        List<Node[]> network = classifier.buildNeuralNetwork(layout, -1, 1);
         List<Map<double[], double[]>> trainTestSplit = DataParser.trainTestSplit(instances, 0.8);
         Map<double[], double[]> train = trainTestSplit.get(0);
         Map<double[], double[]> test = trainTestSplit.get(1);
         for(int epoch = 0; epoch < 7; epoch ++) {
-            for(double[] instance : train.keySet()) {
-                classifier.train(instance, instances.get(instance), classifier.getNetwork());
+            for(double[] instance : train.keySet()) {                
+                network = classifier.train(instance, instances.get(instance), network, 0.2);
             }
         }
         
         int correct = 0;
         for(double[] instance : test.keySet()) {
-           double[] result = classifier.classify(instance, classifier.getNetwork());
+           double[] result = classifier.classify(instance, network);
            
            int prediction = 0;
            double max = result[0];
@@ -64,9 +66,9 @@ public class MultiClassfierTest {
     @Test
     public void testTooFewInputsClassify() {
         int[] layout = new int[] {3,2,2};        
-        Classifier classy = new MultiClassifier(layout, 0.2, 0,0,0 );
+        Classifier classy = new MultiClassifier();        
         assertThrows(IllegalArgumentException.class,
-                ()->{classy.classify( new double[] {0.0, 0.1}, classy.getNetwork());}
+                ()->{classy.classify( new double[] {0.0, 0.1}, classy.buildNeuralNetwork(layout, -1, 1));}
                 );
     }
     
@@ -77,9 +79,9 @@ public class MultiClassfierTest {
     @Test 
     public void inputDontMatchNetworkTrain() {
         int[] layout = new int[]{3,2,2};  
-        Classifier classy = new MultiClassifier(layout, 0.2,0,0,0);
+        Classifier classy = new MultiClassifier();
         assertThrows(IllegalArgumentException.class,
-                ()->{classy.train(new double[]{0.0, 0.1}, new double[]{0.0, 0.0, 0.1} , classy.getNetwork());}
+                ()->{classy.train(new double[]{0.0, 0.1}, new double[]{0.0, 0.0, 0.1} , classy.buildNeuralNetwork(layout, -1, 1), 0.2 );}
                 );
     }
     
@@ -90,9 +92,9 @@ public class MultiClassfierTest {
     @Test
     public void targetDontMatchNetworkTrain() {
         int[] layout = new int[] {3,2,3};
-        Classifier classy = new MultiClassifier(layout, 0.2,0,0,0);
+        Classifier classy = new MultiClassifier();
         assertThrows(IllegalArgumentException.class,
-                ()->{classy.train(new double[]{0.0, 0.1, 0.2}, new double[]{0.0, 0.0} , classy.getNetwork());}
+                ()->{classy.train(new double[]{0.0, 0.1, 0.2}, new double[]{0.0, 0.0} , classy.buildNeuralNetwork(layout, -1, 1), 0.2);}
                 );
     }
     
@@ -101,8 +103,9 @@ public class MultiClassfierTest {
      */
     @Test
     public void testTooFewLayers() {
+        Classifier classy = new MultiClassifier();
         assertThrows(IllegalArgumentException.class,
-                ()->{Classifier classy = new MultiClassifier(new int[] {2,1}, 0.1, 0,0,0);}                
+                ()->{List<Node[]> network = classy.buildNeuralNetwork(new int[] {2,1}, -1, 1);}                
                 );
     }
     
@@ -111,11 +114,19 @@ public class MultiClassfierTest {
      */
     @Test 
     public void testTooFewNodesInLayer() {
+        Classifier classy = new MultiClassifier();
         assertThrows(IllegalArgumentException.class,
-                ()->{Classifier classy = new MultiClassifier(new int[] {0,1}, 0.1, 0,0,0);}                
+                ()->{List<Node[]> network = classy.buildNeuralNetwork(new int[] {0,1}, -1, 1 );}                
                 );
     }
     
+    @Test
+    public void testMinWGreaterThanMaxW() {
+        Classifier classy = new MultiClassifier();
+        assertThrows(IllegalArgumentException.class,
+                ()->{List<Node[]> network = classy.buildNeuralNetwork(new int[] {2,2,2}, 1, 1 );}                
+                );
+    }
        
     /**
      * Learning param that is <= 0. This is illegal as learning param is used to adjust the weight updates when training. If 0 the weights wont update
@@ -125,15 +136,17 @@ public class MultiClassfierTest {
     @Test
     public void illegalLearningParams() {
         int[] layout = new int[] {1,2,3};
+        Classifier classifier = new MultiClassifier();
+        List<Node[]> network = classifier.buildNeuralNetwork(new int[] {2,2,3}, -1, 1 );
         // learning rate = 0
         assertThrows(IllegalArgumentException.class,
-                ()->{Classifier classy = new MultiClassifier(layout, 0, 0, 0, 0);}
+                ()->{classifier.train(new double[] {0,0,0}, new double[] {0,0,0}, network, 0);}
                 );
         // learning rate < 0
         assertThrows(IllegalArgumentException.class,
-                ()->{Classifier classy = new MultiClassifier(layout, -1, 0, 0, 0);}
+                ()->{classifier.train(new double[] {0,0,0}, new double[] {0,0,0}, network, -1);}
                 );
-        //
+        /**
         assertThrows(IllegalArgumentException.class,
                 ()->{Classifier classy = new MultiClassifier(layout, 0, -1, 0, 0);}
                 );
@@ -145,6 +158,7 @@ public class MultiClassfierTest {
         assertThrows(IllegalArgumentException.class,
                 ()->{Classifier classy = new MultiClassifier(layout, 0, 0, 0, -1);}
                 );
+                **/
     }
     
    

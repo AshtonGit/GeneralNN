@@ -21,10 +21,11 @@ public class ActivatedNode extends Node{
 	/**
 	 * node with the bias and weights randomly initialized from a given range.
 	 */
-	public ActivatedNode(double maxBias, double minBias, double minW, double maxW, double error_signal, Node[] parents, ActivatedNode[] children){
-		super(0.0, children);
+	public ActivatedNode(double minW, double maxW, double error_signal, Node[] parents, ActivatedNode[] children){		
+	    super(0.0, children);
+	    if(minW >= maxW)throw new IllegalArgumentException("minW must be less than maxW");
 		Random rand = new Random();
-		this.bias = minBias + (maxBias - minBias) * rand.nextDouble();	
+		this.bias = minW + (maxW - minW) * rand.nextDouble();	
 		this.error_signal = 0;
 		this.weights = new HashMap<Node, Double>();
 		setParentRandWeight(parents, minW, maxW);		

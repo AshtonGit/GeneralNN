@@ -12,8 +12,8 @@ public class BinaryClassifier extends Classifier{
  * 
  * @param layout
  */
-	public BinaryClassifier(int[] layout, double n_learn, double dmax, double momentum, double flat_elim) {	
-	    super(layout, n_learn, dmax, momentum, flat_elim);	
+	public BinaryClassifier() {	
+	    super();	
 	}
 	
 	
@@ -61,7 +61,7 @@ public class BinaryClassifier extends Classifier{
 	
     @Override
     public double[] classify(double[] input, List<Node[]> network) {
-        Node[] input_layer = this.network.get(0);
+        Node[] input_layer = network.get(0);
         int len = input_layer.length;
         if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception
         else {
@@ -69,9 +69,9 @@ public class BinaryClassifier extends Classifier{
                 input_layer[i].setOutput(input[i]);
             }
         }
-        int layer_count = this.network.size();      
+        int layer_count = network.size();      
         for(int i = 1; i < layer_count; i++) {
-            ActivatedNode[] layer = (ActivatedNode[])this.network.get(i);
+            ActivatedNode[] layer = (ActivatedNode[])network.get(i);
             int node_count = layer.length;
             for(int j=0; j<node_count; j++) {
                 double output = layer[j].evaluate(); //node takes care of evaluation itself
@@ -80,7 +80,7 @@ public class BinaryClassifier extends Classifier{
             }
         }
         //return output layer values as results
-        ActivatedNode[] output_layer = (ActivatedNode[])this.network.get(layer_count-1);
+        ActivatedNode[] output_layer = (ActivatedNode[])network.get(layer_count-1);
         len = output_layer.length;
         double[] results = new double[len];     
         for(int i = 0; i < len; i++) {
