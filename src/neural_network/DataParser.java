@@ -4,8 +4,14 @@ package neural_network;
 import java.io.*;
 import java.util.*;
 public class DataParser {
-		
-	
+
+	/**
+	 *
+	 * @param filename - filepath pointing to a CSV format file
+	 * @param num_attributes - number of attributes / input nodes
+	 * @param num_classes - number of possible classification outcomes / output nodes
+	 * @return
+	 */
 	public static Map<double[], double[]> readSupervisedInstances(String filename, int num_attributes, int num_classes){
 		File file = new File(filename);
 		Scanner sc;		

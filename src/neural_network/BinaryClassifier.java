@@ -6,12 +6,7 @@ public class BinaryClassifier extends Classifier{
 
 	
 
-	
-/**
- * 
- * 
- * @param layout
- */
+
 	public BinaryClassifier() {	
 	    super();	
 	}
@@ -22,7 +17,7 @@ public class BinaryClassifier extends Classifier{
 	/**
 	 * 
 	 *binary classification
-	 * @param result
+	 * @param network
 	 * @param target
 	 */
 	public List<Node[]> backPropagate(double[] target, List<Node[]> network ) {
@@ -55,20 +50,20 @@ public class BinaryClassifier extends Classifier{
 		
 	/**
 	 *  TO DO:
-	 *  **ensure inputs match number of outputs else throw error
+	 *
 	 * @param input
 	 */
 	
     @Override
-    public double[] classify(double[] input, List<Node[]> network) {
+    public double[] classify(double[] input, List<Node[]> network) throws Exception {
         Node[] input_layer = network.get(0);
         int len = input_layer.length;
-        if(input.length < len)System.out.println("Error, insufficient number of inputs"); //make this throw an exception
-        else {
-            for(int i=0; i<len; i++) {
-                input_layer[i].setOutput(input[i]);
-            }
-        }
+        if(input.length < len){
+        	throw new Exception("Insufficient number of inputs given");
+		}
+		for(int i=0; i<len; i++) {
+			input_layer[i].setOutput(input[i]);
+		}
         int layer_count = network.size();      
         for(int i = 1; i < layer_count; i++) {
             ActivatedNode[] layer = (ActivatedNode[])network.get(i);

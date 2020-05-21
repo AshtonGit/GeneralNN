@@ -13,7 +13,7 @@ public abstract class Classifier {
         
     }
     
-    public abstract double[] classify(double[] input, List<Node[]> network);
+    public abstract double[] classify(double[] input, List<Node[]> network) throws Exception;
     
     public abstract List<Node[]> backPropagate(double[] target, List<Node[]> network );
     
@@ -50,7 +50,7 @@ public abstract class Classifier {
      *If NN fails to learn correctly, the issue may be that weight delta is added to old weight instead of subtracted. 
      *  Have found both methods used in different sources / texts.
      */
-    public List<Node[]> train(double[] instance, double[] target, List<Node[]> network, double learn_rate) {        
+    public List<Node[]> train(double[] instance, double[] target, List<Node[]> network, double learn_rate) throws Exception{
         validateTargetData(target, network);
         validateLearningParams(learn_rate, 0.0,0.0,0.0);
         classify(instance, network);     

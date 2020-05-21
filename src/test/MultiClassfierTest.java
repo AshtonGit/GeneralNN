@@ -20,7 +20,7 @@ public class MultiClassfierTest {
      * This test failing indicates that the learning algorithm has been negatively altered in some way. 
      */
     @Test
-    public void testAccuracyIris() {
+    public void testAccuracyIris() throws Exception {
         Map<double[], double[]> instances = DataParser.readSupervisedInstances("src/data/iris.data.txt", 4, 3);        
         int[] layout = new int[]{4,3,3};
         MultiClassifier classifier = new MultiClassifier();
@@ -33,29 +33,33 @@ public class MultiClassfierTest {
                 network = classifier.train(instance, instances.get(instance), network, 0.2);
             }
         }
-        
-        int correct = 0;
-        for(double[] instance : test.keySet()) {
-           double[] result = classifier.classify(instance, network);
-           
-           int prediction = 0;
-           double max = result[0];
-           for(int i = 1; i < result.length; i++) {
-               if(max < result[i]) prediction = i; max = result[i];
-           }
-           int actual = 0;
-           double[] target = test.get(instance); 
-           for(int i =0; i<target.length; i++) {
-               if(target[i] == 1) {
-                   actual = i;
-                   break;
+        int rounds = 10;
+        double accuracy = 0.0;
+        for(int j =0; j<rounds; j++){
+
+            int correct = 0;
+            for(double[] instance : test.keySet()) {
+               double[] result = classifier.classify(instance, network);
+
+               int prediction = 0;
+               double max = result[0];
+               for(int i = 1; i < result.length; i++) {
+                   if(max < result[i]) prediction = i; max = result[i];
                }
-           }
-           if(prediction == actual) correct++;
-        }   
-        
-        double accuracy = (double)correct / test.size();
-        System.out.println("MultiClassifier accuracy on iris dataset: "+accuracy);
+               int actual = 0;
+               double[] target = test.get(instance);
+               for(int i =0; i<target.length; i++) {
+                   if(target[i] == 1) {
+                       actual = i;
+                       break;
+                   }
+               }
+               if(prediction == actual) correct++;
+            }
+            accuracy += (double)correct / test.size();
+        }
+        accuracy = accuracy / rounds;
+        System.out.println("Average MultiClassifier accuracy on iris dataset: "+accuracy);
         assert(accuracy > 0.65);
     }
     

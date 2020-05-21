@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Used to make class predictions where there are multiple possible classes
  * where (Number output nodes > 1)
- * @param input
+ * @param
  * @return
  */
 public class MultiClassifier extends Classifier{
